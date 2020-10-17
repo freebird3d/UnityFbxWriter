@@ -26,6 +26,14 @@ namespace Fbx
 			}
 		}
 
+		public static FbxDocument ReadBinary(Stream stream)
+		{
+			if(stream == null)
+				throw new ArgumentNullException(nameof(stream));
+			var reader = new FbxBinaryReader(stream);
+			return reader.Read();
+		}
+
 		/// <summary>
 		/// Reads an ASCII FBX file
 		/// </summary>
