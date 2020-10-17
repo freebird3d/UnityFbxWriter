@@ -100,12 +100,11 @@ namespace Fbx
 			stream.Write(bytes);
 		}
 
-		void WriteArray(Array array, Type elementType, PropertyWriter writer)
+		void WriteArray(Array array, Type elementType, PropertyWriter writer, bool compress = false)
 		{
 			stream.Write(array.Length);
 			
 			var size = array.Length*Marshal.SizeOf(elementType);
-			bool compress = size >= CompressionThreshold;
 			stream.Write(compress ? 1 : 0);
 
 			var sw = stream;
@@ -146,7 +145,7 @@ namespace Fbx
 			}
 		}
 
-		void WriteProperty(object obj, int id)
+		void WriteProperty(object obj, int id, bool compress = false)
 		{
 			if (obj == null)
 				return;
@@ -159,7 +158,7 @@ namespace Fbx
 			if (writerInfo.writer == null) // Array type
 			{
 				var elementType = obj.GetType().GetElementType();
-				WriteArray((Array) obj, elementType, writePropertyActions[elementType].writer);
+				WriteArray((Array) obj, elementType, writePropertyActions[elementType].writer, compress);
 			} else
 				writerInfo.writer(stream, obj);
 		}
@@ -209,7 +208,8 @@ namespace Fbx
 				var propertyBegin = stream.BaseStream.Position;
 				for(int i = 0; i < node.Properties.Count; i++)
 				{
-					WriteProperty(node.Properties[i], i);
+					var compress = (node.Name == "Vertices" || node.Name == "Normals"); // Unity expects this
+					WriteProperty(node.Properties[i], i, compress);
 				}
 				var propertyEnd = stream.BaseStream.Position;
 				stream.BaseStream.Position = propertyLengthPos;
@@ -258,7 +258,8 @@ namespace Fbx
 			foreach (var node in document.Nodes)
 				WriteNode(document, node);
 			WriteNode(document, null);
-			stream.Write(GenerateFooterCode(document));
+			//stream.Write(GenerateFooterCode(document));
+			stream.Write(FbxBinary.footerId);
 			WriteFooter(stream, (int)document.Version);
 			output.Write(memory.GetBuffer(), 0, (int)memory.Position);
 		}
