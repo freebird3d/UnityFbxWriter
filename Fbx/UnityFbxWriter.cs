@@ -61,19 +61,19 @@ namespace Fbx {
 			for (int i = 0; i < triIndices.Length; i += 3) {
 				// set normals
 				var n1 = normalsPerVert[triIndices[i]];
-				var n2 = normalsPerVert[triIndices[i+2]];
-				var n3 = normalsPerVert[triIndices[i+1]];
+				var n2 = normalsPerVert[triIndices[i + 2]];
+				var n3 = normalsPerVert[triIndices[i + 1]];
 
 				normals[i] = n1;
-				normals[i+1] = n2;
-				normals[i+2] = n3;
+				normals[i + 1] = n2;
+				normals[i + 2] = n3;
 
 				// swap 2nd and 3rd, since Unity has inverted x in verts and normals
-				var t = triIndices[i+2];
-				triIndices[i+2] = triIndices[i+1];
-				triIndices[i+1] = t;
+				var t = triIndices[i + 2];
+				triIndices[i + 2] = triIndices[i + 1];
+				triIndices[i + 1] = t;
 
-				triIndices[i+2] = ~triIndices[i+2]; // Fbx spec: negative complement for triangle's last index
+				triIndices[i + 2] = ~triIndices[i + 2]; // Fbx spec: negative complement for triangle's last index
 			}
 
 			Update(verticesNode.node, Vec3ToDouble(vertices));
