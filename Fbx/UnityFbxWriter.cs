@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Fbx {
@@ -114,43 +115,43 @@ namespace Fbx {
 			node.Value = arr;
 		}
 
-		static NodeLink FindNode(FbxDocument doc, string name) {
-            foreach (var node in doc.Nodes) {
-                var foundNode = FindNode(node, name);
-                if (foundNode != null) {
-                    return foundNode;
-                }
-            }
+		static NodeLink FindNode(FbxNodeList parent, string name) {
+			var l = FindNodes(parent, name);
+			if (l == null || l.Count == 0) {
+				return null;
+			}
 
-            return null;
-        }
+			return l[0];
+		}
 
-        static NodeLink FindNode(FbxNode parent, string name) {
-            foreach (var node in parent.Nodes) {
-                if (node == null) {
-                    continue;
-                }
+		static List<NodeLink> FindNodes(FbxNodeList parent, string name) {
+			var list = new List<NodeLink>();
 
-                if (node.Name == name) {
-                    return new NodeLink(parent, node);
-                }
+			foreach (var node in parent.Nodes) {
+				if (node == null) {
+					continue;
+				}
 
-                if (node.Nodes.Count > 0) {
-                    var foundNode = FindNode(node, name);
-                    if (foundNode != null) {
-                        return foundNode;
-                    }
-                }
-            }
+				if (node.Name == name) {
+					list.Add(new NodeLink(parent, node));
+				}
 
-            return null;
-        }
+				if (node.Nodes.Count > 0) {
+					var foundNodes = FindNodes(node, name);
+					if (foundNodes != null) {
+						list.AddRange(foundNodes);
+					}
+				}
+			}
+
+			return list;
+		}
 
 		class NodeLink {
-			public FbxNode parent;
+			public FbxNodeList parent;
 			public FbxNode node;
 
-			public NodeLink(FbxNode parent, FbxNode node) {
+			public NodeLink(FbxNodeList parent, FbxNode node) {
 				this.parent = parent;
 				this.node = node;
 			}

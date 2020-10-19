@@ -209,6 +209,9 @@ namespace Fbx
 				for(int i = 0; i < node.Properties.Count; i++)
 				{
 					var compress = (node.Name == "Vertices" || node.Name == "Normals"); // Unity expects this
+					if (compress && node.Properties[i] is double[] && ((double[])node.Properties[i]).Length == 0) {
+						compress = false;
+					}
 					WriteProperty(node.Properties[i], i, compress);
 				}
 				var propertyEnd = stream.BaseStream.Position;
