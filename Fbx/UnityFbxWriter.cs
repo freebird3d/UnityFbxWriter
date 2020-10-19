@@ -5,16 +5,30 @@ using UnityEngine;
 namespace Fbx {
 
 	public class UnityFbxWriter {
+		/* extern */
+		public static string APPLICATION_VENDOR = "";
+		public static string APPLICATION_NAME = "";
+		public static string APPLICATION_CREATOR = "";
+		public static string APPLICATION_VERSION = "";
+
 		/* consts */
 		const string TEMPLATE_FILENAME = "FbxTemplate"; // add this to Resources dir, copy from FbxTemplate.bytes file in repository
+		const string TEMPLATE_FILENAME_FULL = TEMPLATE_FILENAME + ".bytes";
 
 		const string NODE_VERTICES = "Vertices";
 		const string NODE_NORMALS = "Normals";
 		const string NODE_POLYGON_VERTEX_INDEX = "PolygonVertexIndex";
 		const string NODE_GEOMETRY = "Geometry";
 		const string NODE_MODEL = "Model";
+		const string NODE_CREATOR = "Creator";
+		const string NODE_PROPERTIES70 = "Properties70";
+		const string NODE_P = "P";
+		const string NODE_APPLICATION_VENDOR = "ApplicationVendor";
+		const string NODE_APPLICATION_NAME = "ApplicationName";
+		const string NODE_APPLICATION_VERSION = "ApplicationVersion";
 
 		public static void ExportToBinary(GameObject gameObject, string outputFilePath) {
+			/* sanity checks */
 			var meshFilter = gameObject.GetComponent<MeshFilter>();
 			if (meshFilter == null) {
 				Debug.LogWarning("No MeshFilter found on gameObject to export!");
@@ -29,10 +43,24 @@ namespace Fbx {
 
 			var template = Resources.Load(TEMPLATE_FILENAME) as TextAsset;
 			if (template == null || template.bytes == null || template.bytes.Length == 0) {
-				Debug.LogWarning("No valid FbxTemplate.bytes file found in Resources. Please copy FbxTemplate.bytes (present in this repository) to your Unity project's Resources folder.");
+				Debug.LogWarning("No valid " + TEMPLATE_FILENAME_FULL + " file found in Resources. Please copy " + TEMPLATE_FILENAME_FULL + " (present in this repository) to your Unity project's Resources folder.");
 				return;
 			}
 
+			if (string.IsNullOrEmpty(APPLICATION_VENDOR)) {
+				APPLICATION_VENDOR = Application.companyName;
+			}
+			if (string.IsNullOrEmpty(APPLICATION_CREATOR)) {
+				APPLICATION_CREATOR = Application.productName;
+			}
+			if (string.IsNullOrEmpty(APPLICATION_NAME)) {
+				APPLICATION_NAME = Application.productName;
+			}
+			if (string.IsNullOrEmpty(APPLICATION_VERSION)) {
+				APPLICATION_VERSION = Application.version;
+			}
+
+			/* read and parse template */
 			var templateBytes = template.bytes;
 			var templateStream = new MemoryStream(templateBytes);
 
@@ -46,10 +74,31 @@ namespace Fbx {
 			var modelNode = FindNode(doc, NODE_MODEL);
 
 			if (verticesNode == null || normalsNode == null || polygonsNode == null || geometryNode == null || modelNode == null) {
-				Debug.LogWarning("Invalid FbxTemplate.bytes file");
+				Debug.LogWarning("Invalid " + TEMPLATE_FILENAME_FULL + " file");
 				return;
 			}
 
+			/* set vendor and owner */
+			var creator = FindNodes(doc, NODE_CREATOR);
+			foreach (var c in creator) {
+				c.node.Value = APPLICATION_CREATOR;
+			}
+
+			var p70 = FindNode(doc, NODE_PROPERTIES70);
+			var pNodes = FindNodes(p70.node, NODE_P);
+			foreach (var p in pNodes) {
+				if (p.node.Properties[0].ToString().Contains(NODE_APPLICATION_VENDOR)) {
+					p.node.Properties[4] = APPLICATION_VENDOR;
+				}
+				if (p.node.Properties[0].ToString().Contains(NODE_APPLICATION_NAME)) {
+					p.node.Properties[4] = APPLICATION_NAME;
+				}
+				if (p.node.Properties[0].ToString().Contains(NODE_APPLICATION_VERSION)) {
+					p.node.Properties[4] = APPLICATION_VERSION;
+				}
+			}
+
+			/* set new model data */
 			geometryNode.node.Properties[1] = NODE_GEOMETRY + "::" + gameObject.name;
 			modelNode.node.Properties[1] = NODE_MODEL + "::" + gameObject.name;
 
