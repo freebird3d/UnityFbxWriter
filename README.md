@@ -1,6 +1,6 @@
 # FBX manipulation for .NET (for Unity)
 
-Uses [hamish-milne/FbxWriter](https://github.com/hamish-milne/FbxWriter) under the hood, for writing a Unity GameObject mesh into a binary FBX file. To use this, copy the [FbxTemplate.bytes](https://github.com/cmdr2/UnityFbxWriter/blob/master/FbxTemplate.bytes) file into the `Resources` folder in your Unity project, then call:
+Uses [hamish-milne/FbxWriter](https://github.com/hamish-milne/FbxWriter) under the hood, for writing a Unity GameObject mesh into a binary FBX file. To use this, call:
 ```csharp
 UnityFbxWriter.ExportToBinary(gameObjectToExport, "/path/to/output/file");
 ```
